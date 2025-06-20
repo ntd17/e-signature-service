@@ -1,4 +1,3 @@
-
 <?php
 
 // Ensure contracts directory exists
@@ -30,6 +29,7 @@ function save_contract($contractId, $data) {
     $file = get_contract_filepath($contractId);
     $json = json_encode($data, JSON_PRETTY_PRINT);
     if (file_put_contents($file, $json) === false) {
+        error_log("Failed to save contract data to file: $file");
         return false;
     }
     return true;
@@ -50,6 +50,7 @@ function create_contract($data) {
         try {
             sendRealEmail($signer['email'], $signer['token'], $contractId);
         } catch (Exception $e) {
+            error_log("Failed to send email to {$signer['email']}: " . $e->getMessage());
             http_response_code(500);
             die(json_encode(['error' => 'Failed to send email: ' . $e->getMessage()]));
         }
@@ -58,6 +59,7 @@ function create_contract($data) {
 
     // Save contract data
     if (!save_contract($contractId, $data)) {
+        error_log("Could not save contract data for contract ID: $contractId");
         http_response_code(500);
         die(json_encode(['error' => 'Could not save contract data.']));
     }
@@ -119,6 +121,7 @@ function sign_contract($input) {
 
     // Save updated contract data
     if (!save_contract($contractId, $contract)) {
+        error_log("Could not update contract data for contract ID: $contractId");
         http_response_code(500);
         die(json_encode(['error' => 'Could not update contract data.']));
     }

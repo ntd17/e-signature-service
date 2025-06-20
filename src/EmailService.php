@@ -12,8 +12,6 @@ class EmailService {
         $this->mailer = new PHPMailer(true);
         $this->appUrl = getenv('APP_URL') ?: 'http://localhost:8000';
         
-        // Configure mail transport. If SMTP credentials are provided, use them;
-        // otherwise fall back to the server's default mail settings.
         $smtpHost = getenv('SMTP_HOST');
         $smtpUser = getenv('SMTP_USER');
         $smtpPass = getenv('SMTP_PASS');
@@ -21,19 +19,24 @@ class EmailService {
 
         if ($smtpHost && $smtpUser && $smtpPass) {
             $this->mailer->isSMTP();
-            $this->mailer->Host = $smtpHost;
-            $this->mailer->SMTPAuth = true;
-            $this->mailer->Username = $smtpUser;
-            $this->mailer->Password = $smtpPass;
+            // Enable debugging in development environment only
+            if (getenv('APP_ENV') === 'development') {
+                $this->mailer->SMTPDebug = 2; // Debug level: 2 for detailed output
+            }
+            $this->mailer->Host       = $smtpHost;
+            $this->mailer->SMTPAuth   = true;
+            $this->mailer->Username   = $smtpUser;
+            $this->mailer->Password   = $smtpPass;
             $this->mailer->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
-            $this->mailer->Port = $smtpPort;
+            $this->mailer->Port       = $smtpPort;
         } else {
-            // Use PHP's mail() function or system sendmail
+            error_log("SMTP credentials missing: falling back to mail()");
             $this->mailer->isMail();
         }
         
-        // Set default sender
-        $this->mailer->setFrom('no-reply@esignature-service.com', 'E-Signature Service');
+        // Use SMTP user as sender if available, else fallback
+        $fromEmail = $smtpUser ?: 'no-reply@esignature-service.com';
+        $this->mailer->setFrom($fromEmail, 'E-Signature Service');
     }
 
     /**
@@ -50,14 +53,12 @@ class EmailService {
             $this->mailer->clearAddresses();
             $this->mailer->addAddress($email);
 
-            // Create signing link using APP_URL from environment
             $signingLink = "{$this->appUrl}/public/sign.html?" . http_build_query([
                 'token' => $token,
                 'contract_id' => $contractId,
                 'email' => $email
             ]);
 
-            // Set email content
             $this->mailer->isHTML(true);
             $this->mailer->Subject = 'Document Signing Request';
             $this->mailer->Body = $this->getHtmlBody($signingLink);
@@ -70,9 +71,6 @@ class EmailService {
         }
     }
 
-    /**
-     * Generates HTML email body
-     */
     private function getHtmlBody($signingLink) {
         return "
             <div style='font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;'>
@@ -101,9 +99,6 @@ class EmailService {
         ";
     }
 
-    /**
-     * Generates plain text email body
-     */
     private function getPlainTextBody($signingLink) {
         return "Document Signing Request\n\n" .
                "You have been requested to sign a document.\n" .
