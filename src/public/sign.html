@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document Signing Portal</title>
+    <!-- Tailwind CSS via CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .loading-spinner {
+            border: 3px solid #f3f3f3;
+            border-radius: 50%;
+            border-top: 3px solid #3498db;
+            width: 24px;
+            height: 24px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <div class="max-w-4xl mx-auto px-4 py-8">
+        <!-- Header -->
+        <div class="text-center mb-8">
+            <h1 class="text-3xl font-bold text-gray-900 mb-2">Document Signing Portal</h1>
+            <p class="text-gray-600">Review and sign your document securely</p>
+        </div>
+
+        <!-- Main Card -->
+        <div class="bg-white rounded-lg shadow-lg overflow-hidden">
+            <!-- Contract Info Section -->
+            <div class="p-6 border-b border-gray-200">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Contract Title</label>
+                        <div id="contract_title" class="text-lg font-semibold text-gray-900">Loading...</div>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Status</label>
+                        <div id="contract_status" class="inline-flex items-center px-2.5 py-0.5 rounded-full text-sm font-medium bg-yellow-100 text-yellow-800">
+                            Pending
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Contract ID</label>
+                        <input type="text" id="contract_id" readonly 
+                               class="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-50 text-gray-500">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Your Email</label>
+                        <input type="email" id="signer_email" required 
+                               class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                               pattern="[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$">
+                        <p class="mt-1 text-sm text-gray-500" id="email_validation_message"></p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Signers Progress Section -->
+            <div class="p-6 border-b border-gray-200 bg-gray-50">
+                <h3 class="text-lg font-medium text-gray-900 mb-4">Signing Progress</h3>
+                <div id="signers_progress" class="space-y-4">
+                    <div class="loading-spinner"></div>
+                </div>
+            </div>
+
+            <!-- Document Preview Section -->
+            <div class="p-6 bg-white border-b border-gray-200">
+                <h3 class="text-lg font-medium text-gray-900 mb-4">Document Preview</h3>
+                <div id="document_content" class="bg-gray-50 p-4 rounded border border-gray-200 min-h-[200px] max-h-[400px] overflow-y-auto">
+                    <div class="loading-spinner"></div>
+                </div>
+            </div>
+
+            <!-- Action Section -->
+            <div class="p-6">
+                <input type="hidden" id="token">
+                <button id="signButton" 
+                        class="w-full bg-blue-600 text-white px-4 py-3 rounded-md font-medium hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+                    Sign Document
+                </button>
+                <div id="result" class="mt-4"></div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="text-center mt-8 text-sm text-gray-600">
+            <p>Secure document signing service. All signatures are cryptographically verified.</p>
+        </div>
+
+        <!-- Confirmation Modal -->
+        <div id="confirmModal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full">
+            <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+                <div class="mt-3 text-center">
+                    <h3 class="text-lg leading-6 font-medium text-gray-900">Confirm Signature</h3>
+                    <div class="mt-2 px-7 py-3">
+                        <p class="text-sm text-gray-500">
+                            Are you sure you want to sign this document? This action cannot be undone.
+                        </p>
+                    </div>
+                    <div class="items-center px-4 py-3">
+                        <button id="confirmSign" class="px-4 py-2 bg-blue-600 text-white text-base font-medium rounded-md shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 mr-2">
+                            Confirm
+                        </button>
+                        <button id="cancelSign" class="px-4 py-2 bg-gray-100 text-gray-700 text-base font-medium rounded-md shadow-sm hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2">
+                            Cancel
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const contractId = urlParams.get('contract_id');
+            const token = urlParams.get('token');
+            const email = urlParams.get('email');
+            let contractData = null;
+
+            // Set form values
+            document.getElementById('contract_id').value = contractId || '';
+            document.getElementById('token').value = token || '';
+            document.getElementById('signer_email').value = email || '';
+
+            // Email validation
+            const emailInput = document.getElementById('signer_email');
+            const emailValidationMessage = document.getElementById('email_validation_message');
+            
+            emailInput.addEventListener('input', function() {
+                if (this.validity.valid) {
+                    emailValidationMessage.textContent = '';
+                    emailValidationMessage.className = 'mt-1 text-sm text-gray-500';
+                } else {
+                    emailValidationMessage.textContent = 'Please enter a valid email address';
+                    emailValidationMessage.className = 'mt-1 text-sm text-red-600';
+                }
+            });
+
+            // Initialize security tokens and session management
+            let csrfToken = '';
+            let sessionCheckInterval;
+
+            // Check session status periodically
+            function startSessionCheck() {
+                sessionCheckInterval = setInterval(() => {
+                    fetch('/session/validate')
+                        .then(response => response.json())
+                        .then(data => {
+                            if (!data.valid) {
+                                clearInterval(sessionCheckInterval);
+                                showError('Your signing session has expired. Please refresh the page.');
+                                document.getElementById('signButton').disabled = true;
+                            } else {
+                                // Show session expiry countdown
+                                const remainingTime = Math.max(0, data.expires_at - Math.floor(Date.now() / 1000));
+                                if (remainingTime <= 300) { // Show warning when 5 minutes or less remaining
+                                    showWarning(`Session expires in ${Math.ceil(remainingTime / 60)} minutes`);
+                                }
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Session validation error:', error);
+                        });
+                }, 30000); // Check every 30 seconds
+            }
+
+            // Fetch CSRF token
+            fetch('/csrf-token', { credentials: 'include' })
+                .then(response => response.json())
+                .then(data => {
+                    csrfToken = data.token;
+                })
+                .catch(error => {
+                    showError('Error loading security token. Please refresh the page.');
+                });
+
+            // Start session check
+            startSessionCheck();
+
+            // Fetch contract details
+            if (contractId) {
+                fetch(`/contract/${contractId}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        contractData = data;
+                        document.getElementById('contract_title').textContent = data.title;
+                        updateContractStatus(data.status);
+                        updateSignersProgress(data.signers);
+                    })
+                    .catch(error => {
+                        showError('Error loading contract details.');
+                    });
+
+                // Fetch document content
+                fetch(`/contract/${contractId}/document`)
+                    .then(response => response.text())
+                    .then(text => {
+                        document.getElementById('document_content').innerText = text;
+                    })
+                    .catch(error => {
+                        document.getElementById('document_content').innerHTML = 
+                            '<div class="text-red-600">Error loading document content.</div>';
+                    });
+            }
+
+            // Update contract status
+            function updateContractStatus(status) {
+                const statusElement = document.getElementById('contract_status');
+                let statusClass = '';
+                switch(status) {
+                    case 'completed':
+                        statusClass = 'bg-green-100 text-green-800';
+                        break;
+                    case 'pending':
+                        statusClass = 'bg-yellow-100 text-yellow-800';
+                        break;
+                    default:
+                        statusClass = 'bg-gray-100 text-gray-800';
+                }
+                statusElement.className = `inline-flex items-center px-2.5 py-0.5 rounded-full text-sm font-medium ${statusClass}`;
+                statusElement.textContent = status.charAt(0).toUpperCase() + status.slice(1);
+            }
+
+            // Update signers progress
+            function updateSignersProgress(signers) {
+                const progressElement = document.getElementById('signers_progress');
+                progressElement.innerHTML = signers.map(signer => `
+                    <div class="flex items-center justify-between p-3 bg-white rounded-lg shadow-sm">
+                        <div class="flex items-center">
+                            <div class="ml-3">
+                                <p class="text-sm font-medium text-gray-900">${signer.email}</p>
+                                <p class="text-sm text-gray-500">
+                                    ${signer.signed_at ? 'Signed at: ' + new Date(signer.signed_at).toLocaleString() : 'Pending signature'}
+                                </p>
+                            </div>
+                        </div>
+                        <div class="flex-shrink-0">
+                            ${signer.status === 'signed' 
+                                ? '<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">Signed</span>'
+                                : '<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">Pending</span>'
+                            }
+                        </div>
+                    </div>
+                `).join('');
+            }
+
+            // Message display functions
+            function showMessage(message, type) {
+                const colors = {
+                    error: ['red', 'red'],
+                    success: ['green', 'green'],
+                    warning: ['yellow', 'yellow']
+                };
+                const [color1, color2] = colors[type];
+                document.getElementById('result').innerHTML = `
+                    <div class="bg-${color1}-50 border-l-4 border-${color1}-600 p-4">
+                        <div class="text-${color2}-700">${message}</div>
+                    </div>`;
+            }
+
+            function showError(message) {
+                showMessage(message, 'error');
+            }
+
+            function showSuccess(message) {
+                showMessage(message, 'success');
+            }
+
+            function showWarning(message) {
+                showMessage(message, 'warning');
+            }
+
+            // Handle signing
+            function handleSign() {
+                if (!emailInput.validity.valid) {
+                    showError('Please enter a valid email address');
+                    return;
+                }
+
+                document.getElementById('confirmModal').classList.remove('hidden');
+            }
+
+            function submitSignature() {
+                const button = document.getElementById('signButton');
+                button.disabled = true;
+                button.innerHTML = '<div class="loading-spinner inline-block mr-2"></div> Signing...';
+
+                const payload = {
+                    contract_id: document.getElementById('contract_id').value,
+                    signer_email: document.getElementById('signer_email').value,
+                    token: document.getElementById('token').value
+                };
+
+                fetch('/sign', {
+                    method: 'POST',
+                    credentials: 'include',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-Token': csrfToken
+                    },
+                    body: JSON.stringify(payload)
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.error) {
+                        showError(data.error);
+                    } else {
+                        showSuccess('Document successfully signed!');
+                        updateContractStatus(data.status);
+                        updateSignersProgress(data.signers);
+                        button.style.display = 'none';
+                        clearInterval(sessionCheckInterval); // Stop session checking after successful signing
+                    }
+                })
+                .catch(error => {
+                    showError('An error occurred while signing the document.');
+                })
+                .finally(() => {
+                    button.disabled = false;
+                    button.innerHTML = 'Sign Document';
+                    document.getElementById('confirmModal').classList.add('hidden');
+                });
+            }
+
+            // Event Listeners
+            document.getElementById('signButton').addEventListener('click', handleSign);
+            document.getElementById('confirmSign').addEventListener('click', submitSignature);
+            document.getElementById('cancelSign').addEventListener('click', () => {
+                document.getElementById('confirmModal').classList.add('hidden');
+            });
+        });
+    </script>
+</body>
+</html>
