@@ -1,0 +1,53 @@
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# Composer
+/vendor/
+composer.phar
+
+# Data directory
+/data/
+/data/contracts/*
+!/data/contracts/.gitkeep
+
+# PHP CS Fixer
+.php_cs
+.php_cs.cache
+.php-cs-fixer.cache
+
+# PHPUnit
+.phpunit.result.cache
+/phpunit.xml
+
+# PHPStan
+phpstan.neon
+
+# IDE files
+.idea/
+.vscode/
+*.sublime-project
+*.sublime-workspace
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Logs
+*.log
+/logs/
+
+# Cache
+/cache/
+
+# Docker
+docker-compose.override.yml
+
+# Node modules (if using any frontend build tools)
+/node_modules/
