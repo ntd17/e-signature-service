@@ -83,6 +83,18 @@ function create_contract($data) {
     $data['created_at'] = date('c');
     $data['status'] = 'pending';
 
+    // Save PDF if provided in base64 format
+    if (!empty($data['pdf_base64'])) {
+        $decoded = base64_decode(preg_replace('/^data:application\/pdf;base64,/', '', $data['pdf_base64']));
+        if ($decoded !== false) {
+            $pdfPath = __DIR__ . "/../data/contracts/{$contractId}.pdf";
+            if (file_put_contents($pdfPath, $decoded) !== false) {
+                $data['pdf_path'] = $pdfPath;
+            }
+        }
+        unset($data['pdf_base64']);
+    }
+
     // Process each signer: generate token and set initial status
     foreach ($data['signers'] as &$signer) {
         $signer['token'] = generateUUID();

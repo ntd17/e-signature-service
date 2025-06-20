@@ -84,7 +84,9 @@ function handleCsrfToken() {
 function handleContractsAPI($method, $pathParts) {
     switch ($method) {
         case 'GET':
-            if (isset($pathParts[1])) {
+            if (isset($pathParts[1]) && isset($pathParts[2]) && $pathParts[2] === 'download') {
+                downloadContract($pathParts[1]);
+            } elseif (isset($pathParts[1])) {
                 getContract($pathParts[1]);
             } else {
                 listContracts();
@@ -119,9 +121,10 @@ function handleContractsAPI($method, $pathParts) {
 function createContractAPI() {
     $input = json_decode(file_get_contents('php://input'), true);
 
-    if (!$input || !isset($input['title'], $input['contract_text'], $input['signers'])) {
+    if (!$input || !isset($input['title'], $input['signers']) ||
+        (empty($input['contract_text']) && empty($input['pdf_base64']))) {
         http_response_code(400);
-        echo json_encode(['error' => 'Missing required fields: title, contract_text, signers']);
+        echo json_encode(['error' => 'Missing required fields: title, signers and document']);
         return;
     }
     
@@ -240,6 +243,35 @@ function getSignatureStatus($contractId) {
             http_response_code(500);
             echo json_encode(['error' => 'Invalid contract data']);
         }
+    } catch (Exception $e) {
+        http_response_code(500);
+        echo json_encode(['error' => $e->getMessage()]);
+    }
+}
+
+function downloadContract($contractId) {
+    try {
+        $contract = get_contract($contractId);
+        if (!$contract) {
+            http_response_code(404);
+            echo json_encode(['error' => 'Contract not found']);
+            return;
+        }
+        if (($contract['status'] ?? '') !== 'completed') {
+            http_response_code(403);
+            echo json_encode(['error' => 'Contract not signed']);
+            return;
+        }
+        $path = $contract['pdf_path'] ?? null;
+        if (!$path || !file_exists($path)) {
+            http_response_code(404);
+            echo json_encode(['error' => 'Signed PDF not found']);
+            return;
+        }
+
+        header('Content-Type: application/pdf');
+        header('Content-Disposition: attachment; filename="signed_contract.pdf"');
+        readfile($path);
     } catch (Exception $e) {
         http_response_code(500);
         echo json_encode(['error' => $e->getMessage()]);
