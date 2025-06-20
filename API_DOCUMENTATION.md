@@ -381,3 +381,7 @@ SMTP_USER=your-email@gmail.com
 SMTP_PASS=your-app-password
 APP_URL=http://localhost:8000
 APP_ENV=development
+```
+
+If these SMTP values are omitted, email notifications will use the server's
+default mail configuration.

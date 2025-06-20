@@ -35,13 +35,19 @@ if (!in_array($apiKey, $validApiKeys)) {
     echo json_encode(['error' => 'Invalid API key']);
     exit;
 }
+*/
 
 $method = $_SERVER['REQUEST_METHOD'];
 $path = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
-$pathParts = explode('/', trim($path, '/'));
+$pathParts = array_values(array_filter(explode('/', trim($path, '/')), 'strlen'));
 
-// Remove 'src/api' from path parts
-$pathParts = array_slice($pathParts, 2);
+// Remove optional leading segments like 'src' or 'api'
+if (!empty($pathParts) && $pathParts[0] === 'src') {
+    array_shift($pathParts);
+}
+if (!empty($pathParts) && $pathParts[0] === 'api') {
+    array_shift($pathParts);
+}
 
 // Route API requests
 switch ($pathParts[0] ?? '') {
