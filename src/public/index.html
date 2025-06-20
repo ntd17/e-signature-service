@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>E-Signature Service</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <div class="max-w-4xl mx-auto px-4 py-16">
+        <div class="text-center mb-12">
+            <h1 class="text-4xl font-bold text-gray-900 mb-4">E-Signature Service</h1>
+            <p class="text-xl text-gray-600">Secure document signing made simple</p>
+        </div>
+
+        <div class="grid md:grid-cols-2 gap-8 max-w-2xl mx-auto">
+            <!-- Create Contract Card -->
+            <div class="bg-white rounded-lg shadow-lg overflow-hidden">
+                <div class="p-6">
+                    <h2 class="text-2xl font-semibold text-gray-900 mb-4">Create Contract</h2>
+                    <p class="text-gray-600 mb-6">Create a new contract and invite signers to sign it electronically.</p>
+                    <a href="/public/create.html" 
+                       class="block w-full bg-blue-600 text-white text-center px-4 py-3 rounded-md font-medium hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors">
+                        Create New Contract
+                    </a>
+                </div>
+            </div>
+
+            <!-- Sign Document Card -->
+            <div class="bg-white rounded-lg shadow-lg overflow-hidden">
+                <div class="p-6">
+                    <h2 class="text-2xl font-semibold text-gray-900 mb-4">Sign Document</h2>
+                    <p class="text-gray-600 mb-6">Sign a document that has been shared with you via email.</p>
+                    <p class="text-sm text-gray-500 mb-6">Note: You should use the link provided in your email to sign documents.</p>
+                    <button disabled
+                            class="w-full bg-gray-100 text-gray-600 px-4 py-3 rounded-md font-medium cursor-not-allowed">
+                        Use Email Link to Sign
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Features Section -->
+        <div class="mt-16">
+            <h2 class="text-2xl font-semibold text-gray-900 text-center mb-8">Features</h2>
+            <div class="grid md:grid-cols-3 gap-8">
+                <div class="bg-white p-6 rounded-lg shadow">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-2">Secure Signing</h3>
+                    <p class="text-gray-600">End-to-end encrypted document signing with secure session management.</p>
+                </div>
+                <div class="bg-white p-6 rounded-lg shadow">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-2">Multiple Signers</h3>
+                    <p class="text-gray-600">Invite multiple parties to sign your documents in any order.</p>
+                </div>
+                <div class="bg-white p-6 rounded-lg shadow">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-2">Real-time Status</h3>
+                    <p class="text-gray-600">Track signing progress and get instant notifications.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <footer class="mt-16 text-center text-sm text-gray-600">
+            <p>Secure document signing service. All signatures are cryptographically verified.</p>
+        </footer>
+    </div>
+</body>
+</html>
