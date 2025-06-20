@@ -1,4 +1,6 @@
 <?php
+namespace App\Services;
+
 require_once __DIR__ . '/../vendor/autoload.php';
 
 use PHPMailer\PHPMailer\PHPMailer;
@@ -11,7 +13,7 @@ class EmailService {
     public function __construct() {
         $this->mailer = new PHPMailer(true);
         $this->appUrl = getenv('APP_URL') ?: 'http://localhost:8000';
-        
+
         $smtpHost = getenv('SMTP_HOST');
         $smtpUser = getenv('SMTP_USER');
         $smtpPass = getenv('SMTP_PASS');
@@ -33,7 +35,7 @@ class EmailService {
             error_log("SMTP credentials missing: falling back to mail()");
             $this->mailer->isMail();
         }
-        
+
         // Use SMTP user as sender if available, else fallback
         $fromEmail = $smtpUser ?: 'no-reply@esignature-service.com';
         $this->mailer->setFrom($fromEmail, 'E-Signature Service');
@@ -54,10 +56,10 @@ class EmailService {
             $this->mailer->addAddress($email);
 
             $signingLink = "{$this->appUrl}/public/sign.html?" . http_build_query([
-                'token' => $token,
-                'contract_id' => $contractId,
-                'email' => $email
-            ]);
+                    'token' => $token,
+                    'contract_id' => $contractId,
+                    'email' => $email
+                ]);
 
             $this->mailer->isHTML(true);
             $this->mailer->Subject = 'Document Signing Request';
@@ -81,8 +83,8 @@ class EmailService {
                     <p style='color: #374151; font-size: 16px;'>You have been requested to sign a document.</p>
                     <p style='color: #374151; font-size: 16px;'>Please click the button below to review and sign the document:</p>
                     <div style='text-align: center; margin: 30px 0;'>
-                        <a href='{$signingLink}' 
-                           style='background-color: #1a56db; color: white; padding: 12px 24px; 
+                        <a href='{$signingLink}'
+                           style='background-color: #1a56db; color: white; padding: 12px 24px;
                                   text-decoration: none; border-radius: 6px; font-weight: 600;'>
                             Sign Document
                         </a>
@@ -101,11 +103,11 @@ class EmailService {
 
     private function getPlainTextBody($signingLink) {
         return "Document Signing Request\n\n" .
-               "You have been requested to sign a document.\n" .
-               "Please visit the following link to review and sign the document:\n\n" .
-               $signingLink . "\n\n" .
-               "If you did not expect this request, please ignore this email.\n" .
-               "For security reasons, this link will expire after signing.\n\n" .
-               "This is an automated message, please do not reply.";
+            "You have been requested to sign a document.\n" .
+            "Please visit the following link to review and sign the document:\n\n" .
+            $signingLink . "\n\n" .
+            "If you did not expect this request, please ignore this email.\n" .
+            "For security reasons, this link will expire after signing.\n\n" .
+            "This is an automated message, please do not reply.";
     }
 }
