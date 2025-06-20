@@ -124,13 +124,10 @@ Content-Type: application/json
 {
   "title": "Service Agreement",
   "contract_text": "This is the contract content that needs to be signed...",
+  "pdf_base64": "<optional base64 encoded PDF>",
   "signers": [
-    {
-      "email": "signer1@example.com"
-    },
-    {
-      "email": "signer2@example.com"
-    }
+    { "email": "signer1@example.com" },
+    { "email": "signer2@example.com" }
   ]
 }
 ```
@@ -272,6 +269,19 @@ Content-Type: application/json
   ]
 }
 ```
+
+#### Download Signed Contract
+```http
+GET /api/contracts/{contract_id}/download
+```
+
+**Headers:**
+```
+X-API-Key: demo-api-key-123
+```
+
+**Response:**
+Returns the signed PDF file as a download. If the contract is not completed, the endpoint returns `403`.
 
 ## Error Responses
 
