@@ -125,6 +125,9 @@ APP_URL=http://localhost:8000
 APP_ENV=development
 ```
 
+If the SMTP variables are left blank, the service will attempt to use the
+server's default mail configuration for sending notifications.
+
 ## API Endpoints
 
 - `GET /api/status` - API status and information

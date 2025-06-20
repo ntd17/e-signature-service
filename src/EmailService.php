@@ -12,14 +12,25 @@ class EmailService {
         $this->mailer = new PHPMailer(true);
         $this->appUrl = getenv('APP_URL') ?: 'http://localhost:8000';
         
-        // Configure SMTP
-        $this->mailer->isSMTP();
-        $this->mailer->Host = getenv('SMTP_HOST');
-        $this->mailer->SMTPAuth = true;
-        $this->mailer->Username = getenv('SMTP_USER');
-        $this->mailer->Password = getenv('SMTP_PASS');
-        $this->mailer->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
-        $this->mailer->Port = getenv('SMTP_PORT');
+        // Configure mail transport. If SMTP credentials are provided, use them;
+        // otherwise fall back to the server's default mail settings.
+        $smtpHost = getenv('SMTP_HOST');
+        $smtpUser = getenv('SMTP_USER');
+        $smtpPass = getenv('SMTP_PASS');
+        $smtpPort = getenv('SMTP_PORT') ?: 587;
+
+        if ($smtpHost && $smtpUser && $smtpPass) {
+            $this->mailer->isSMTP();
+            $this->mailer->Host = $smtpHost;
+            $this->mailer->SMTPAuth = true;
+            $this->mailer->Username = $smtpUser;
+            $this->mailer->Password = $smtpPass;
+            $this->mailer->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
+            $this->mailer->Port = $smtpPort;
+        } else {
+            // Use PHP's mail() function or system sendmail
+            $this->mailer->isMail();
+        }
         
         // Set default sender
         $this->mailer->setFrom('no-reply@esignature-service.com', 'E-Signature Service');
