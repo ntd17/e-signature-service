@@ -9,11 +9,14 @@ try {
     die('Database error');
 }
 
-// Example table creation - adjust as needed
-$pdo->exec("CREATE TABLE IF NOT EXISTS users (
+// Contract table for storing basic contract metadata
+$pdo->exec("CREATE TABLE IF NOT EXISTS contracts (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    email TEXT UNIQUE,
-    password TEXT,
-    created_at TEXT
+    title TEXT NOT NULL,
+    contract_text TEXT,
+    pdf_path TEXT,
+    status TEXT,
+    created_at TEXT,
+    updated_at TEXT
 )");
 
