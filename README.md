@@ -102,7 +102,7 @@ curl -X GET http://localhost:8000/api/contracts \
 src/
 ├── index.php          # Main application entry point
 ├── functions.php      # Core business logic
-├── EmailService.php   # Email handling
+├── MailClient.php     # Email sending
 ├── RateLimiter.php    # Rate limiting functionality
 ├── SessionManager.php # Session management
 ├── api/
