@@ -36,14 +36,15 @@ class EmailService {
         $headers .= "Content-type: text/html; charset=utf-8\r\n";
         $headers .= "From: noreply@example.com\r\n";
 
-        // Para ambiente de desenvolvimento, podemos registrar o email em vez de enviá-lo
-        error_log("Email enviado para: {$email}, Link: {$signUrl}");
+        // Tenta enviar o email usando a função mail() padrão do PHP
+        $sent = mail($email, $subject, $message, $headers);
 
-        // Descomente a linha abaixo para enviar emails reais em produção
-        // return mail($email, $subject, $message, $headers);
+        // Caso o envio falhe, registra nos logs para depuração
+        if (!$sent) {
+            error_log("Falha ao enviar email para: {$email}, Link: {$signUrl}");
+        }
 
-        // Para fins de desenvolvimento, apenas retornamos true
-        return true;
+        return $sent;
     }
 }
 

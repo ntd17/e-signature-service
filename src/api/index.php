@@ -277,3 +277,26 @@ function downloadContract($contractId) {
         echo json_encode(['error' => $e->getMessage()]);
     }
 }
+
+function handleStatusAPI($method, $pathParts) {
+    if ($method !== 'GET') {
+        http_response_code(405);
+        echo json_encode(['error' => 'Method not allowed']);
+        return;
+    }
+
+    echo json_encode([
+        'status' => 'online',
+        'version' => '1.0.0',
+        'timestamp' => date(DATE_ATOM),
+        'endpoints' => [
+            'GET /api/contracts' => 'List all contracts',
+            'GET /api/contracts/{id}' => 'Get contract details',
+            'POST /api/contracts' => 'Create new contract',
+            'PUT /api/contracts/{id}' => 'Update contract',
+            'DELETE /api/contracts/{id}' => 'Delete contract',
+            'GET /api/signatures/{contract_id}' => 'Get signature status',
+            'POST /api/signatures' => 'Sign contract'
+        ]
+    ]);
+}
