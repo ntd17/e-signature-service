@@ -39,6 +39,12 @@ docker-compose up -d
 
 4. Open your browser and navigate to `http://localhost:8000`
 
+### Local Email Testing
+
+To inspect outgoing emails during development, use the provided `docker-compose.override.yml`
+which starts a MailHog container. Emails sent by the application will be
+available at `http://localhost:8025`.
+
 ## Usage
 
 ### Web Interface
@@ -96,7 +102,7 @@ curl -X GET http://localhost:8000/api/contracts \
 src/
 ├── index.php          # Main application entry point
 ├── functions.php      # Core business logic
-├── EmailService.php   # Email handling
+├── MailClient.php     # Email sending
 ├── RateLimiter.php    # Rate limiting functionality
 ├── SessionManager.php # Session management
 ├── api/
@@ -111,22 +117,23 @@ data/
 
 ## Environment Configuration
 
-Configure the following variables in your `.env` file:
+Configure the following variables in your `.env` file (example uses MailHog for local testing):
 
 ```env
 # SMTP Configuration
-SMTP_HOST=smtp.gmail.com
-SMTP_PORT=587
-SMTP_USER=your-email@gmail.com
-SMTP_PASS=your-app-password
+SMTP_HOST=mailhog
+SMTP_PORT=1025
+SMTP_USER=
+SMTP_PASS=
 
 # Application Configuration
 APP_URL=http://localhost:8000
 APP_ENV=development
 ```
 
-If the SMTP variables are left blank, the service will attempt to use the
-server's default mail configuration for sending notifications.
+SMTP must be configured for email delivery. When running `docker-compose` with the
+provided `docker-compose.override.yml`, MailHog will be available at `http://localhost:8025`
+and the default settings in `.env.example` will work out of the box.
 
 ## API Endpoints
 

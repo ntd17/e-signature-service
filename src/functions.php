@@ -1,52 +1,13 @@
 <?php
 
+require_once __DIR__ . '/../vendor/autoload.php';
+require_once __DIR__ . '/MailClient.php';
+
 // Ensure contracts directory exists
 if (!is_dir(__DIR__ . '/../data/contracts')) {
     mkdir(__DIR__ . '/../data/contracts', 0777, true);
 }
 
-// Implementação da classe EmailService no mesmo arquivo
-class EmailService {
-    public function sendSigningInvitation($email, $token, $contractId) {
-        // Configuração básica de email
-        $subject = "Convite para assinar documento";
-        $baseUrl = isset($_SERVER['HTTP_HOST']) ?
-            (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https://" : "http://") . $_SERVER['HTTP_HOST'] :
-            "http://localhost";
-
-        $signUrl = "{$baseUrl}/sign.html?contract_id={$contractId}&token={$token}&email=" . urlencode($email);
-
-        $message = "
-        <html>
-        <head>
-            <title>Convite para assinar documento</title>
-        </head>
-        <body>
-            <p>Olá,</p>
-            <p>Você foi convidado para assinar um documento eletrônico.</p>
-            <p>Para visualizar e assinar o documento, <a href='{$signUrl}'>clique aqui</a>.</p>
-            <p>Ou acesse o seguinte link: {$signUrl}</p>
-            <p>Este link é único e não deve ser compartilhado.</p>
-        </body>
-        </html>
-        ";
-
-        // Cabeçalhos para envio de email HTML
-        $headers = "MIME-Version: 1.0\r\n";
-        $headers .= "Content-type: text/html; charset=utf-8\r\n";
-        $headers .= "From: noreply@example.com\r\n";
-
-        // Tenta enviar o email usando a função mail() padrão do PHP
-        $sent = mail($email, $subject, $message, $headers);
-
-        // Caso o envio falhe, registra nos logs para depuração
-        if (!$sent) {
-            error_log("Falha ao enviar email para: {$email}, Link: {$signUrl}");
-        }
-
-        return $sent;
-    }
-}
 
 function generateUUID() {
     $data = random_bytes(16);
@@ -229,8 +190,20 @@ function delete_contract($contractId) {
 }
 
 function sendRealEmail($email, $token, $contractId) {
-    $emailService = new EmailService();
-    return $emailService->sendSigningInvitation($email, $token, $contractId);
+    $baseUrl = getenv('APP_URL') ?: (isset($_SERVER['HTTP_HOST'])
+        ? ((isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? 'https://' : 'http://') . $_SERVER['HTTP_HOST'])
+        : 'http://localhost');
+
+    $signUrl = "$baseUrl/public/sign.html?" . http_build_query([
+        'contract_id' => $contractId,
+        'token' => $token,
+        'email' => $email
+    ]);
+
+    $subject = 'Convite para assinar documento';
+    $body = "Voce foi convidado para assinar um documento. Clique no link a seguir:\n$signUrl";
+
+    return sendEmail($email, $subject, $body);
 }
 
 // Adicione estas funções ao final do arquivo functions.php

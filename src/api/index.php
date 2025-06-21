@@ -11,7 +11,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 }
 
 require_once '../functions.php';
-require_once '../EmailService.php';
 require_once '../RateLimiter.php';
 require_once '../SessionManager.php';
 
