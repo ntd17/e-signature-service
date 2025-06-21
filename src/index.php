@@ -6,9 +6,7 @@ if (session_status() === PHP_SESSION_NONE) {
 
 require_once __DIR__ . '/../vendor/autoload.php';
 require_once __DIR__ . '/config/database.php';
-require_once __DIR__ . '/Services/EmailService.php';
-
-use App\Services\EmailService;
+require_once __DIR__ . '/functions.php';
 
 // Configurações de cabeçalho para segurança
 header("X-Content-Type-Options: nosniff");
@@ -34,8 +32,6 @@ $path = parse_url($requestUri, PHP_URL_PATH);
 
 // Função para lidar com o download de documentos assinados
 function handleDocumentDownload($contractId) {
-    global $pdo;
-
     // Verificar se o usuário está autenticado
     if (!isset($_SESSION['user_id'])) {
         header('HTTP/1.1 401 Unauthorized');
@@ -43,21 +39,16 @@ function handleDocumentDownload($contractId) {
         return;
     }
 
-    // Verificar se o contrato existe e pertence ao usuário
-    $stmt = $pdo->prepare("
-        SELECT c.file_path FROM contracts c
-        WHERE c.id = ? AND c.user_id = ? AND c.status = 'signed'
-    ");
-    $stmt->execute([$contractId, $_SESSION['user_id']]);
-    $contract = $stmt->fetch(PDO::FETCH_ASSOC);
+    // Obter informações do contrato a partir dos arquivos JSON
+    $contract = get_contract($contractId);
 
-    if (!$contract) {
+    if (!$contract || ($contract['status'] ?? '') !== 'completed') {
         header('HTTP/1.1 404 Not Found');
         echo "Documento não encontrado ou não assinado";
         return;
     }
 
-    $filePath = $contract['file_path'];
+    $filePath = $contract['pdf_path'] ?? null;
 
     if (!file_exists($filePath)) {
         header('HTTP/1.1 404 Not Found');
